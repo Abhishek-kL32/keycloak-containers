@@ -7,7 +7,7 @@ ENV JDBC_MARIADB_VERSION 2.5.4
 ENV JDBC_MSSQL_VERSION 10.2.0.jre11
 
 ENV LAUNCH_JBOSS_IN_BACKGROUND 1
-ENV PROXY_ADDRESS_FORWARDING false
+ENV PROXY_ADDRESS_FORWARDING true
 ENV JBOSS_HOME /opt/jboss/keycloak
 ENV LANG en_US.UTF-8
 
@@ -17,10 +17,15 @@ ARG KEYCLOAK_DIST=https://github.com/keycloak/keycloak/releases/download/$KEYCLO
 
 USER root
 
-RUN microdnf update -y && microdnf install -y glibc-langpack-en gzip hostname java-11-openjdk-headless openssl tar which && microdnf clean all
+RUN microdnf update -y && microdnf install -y glibc-langpack-en gzip hostname java-11-openjdk-headless openssl tar which && microdnf clean all && microdnf install -y yum
 
 ADD tools /opt/jboss/tools
 RUN /opt/jboss/tools/build-keycloak.sh
+
+USER jboss
+RUN sed -i -e 's/<web-context>auth<\/web-context>/<web-context>keycloak<\/web-context>/' /opt/jboss/keycloak/standalone/configuration/standalone.xml
+RUN sed -i -e 's/<web-context>auth<\/web-context>/<web-context>keycloak<\/web-context>/' /opt/jboss/keycloak/standalone/configuration/standalone-ha.xml
+RUN sed -i -e 's/\/auth/\/keycloak/' /opt/jboss/keycloak/welcome-content/index.html
 
 USER 1000
 
